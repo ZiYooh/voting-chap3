@@ -83,6 +83,40 @@ const App = {
       });
     },
 
+    buyTokens: async function() {
+      let tokensToBuy = parseInt($("#buy").val());
+      let price = tokensToBuy * parseInt(this.web3.utils.toWei(pricePerToken));
+      const { buy } = this.voting.methods;
+
+      $("#buy-msg").html("Purchase order has been submitted. Please wait.");
+      await buy().send({gas: 140000, value: price, from: this.account})
+      $("#buy-msg").html("");
+      let balance = await this.web3.eth.getBalance(this.contractAddress)
+      $("#contract-balance").html(this.web3.utils.fromWei(balance.toString()) + " Ether");
+      await this.populateTokenData();
+    },
+
+    voteForCandidate: async function() {
+      const { web3 } = this;
+      let candidateName = $("#candidate").val();
+      let voteTokens = $("#vote-tokens").val();
+      $("#msg").html("Vote has been submitted. The vote count will increment as soon as the vote is recorded on the blockchain. Please wait.")
+      $("#candidate").val("");
+      $("#vote-tokens").val("");
+    
+      const { totalVotesFor, voteForCandidate } = this.voting.methods;
+    
+      await voteForCandidate(web3.utils.asciiToHex(candidateName), voteTokens).send({gas: 140000, from: this.account});
+      console.log(candidates);
+      console.log(candidateName);
+      let div_id = candidates[candidateName];
+      console.log(div_id);
+      var count = await totalVotesFor(web3.utils.asciiToHex(candidateName)).call();
+      $("#" + div_id).html(count);
+      $("#msg").html("");
+    },
+      
+
 };
 
 window.App = App;
@@ -94,7 +128,7 @@ window.addEventListener("load", function () {
         window.ethereum.enable(); // get permission to access accounts
     } else {
         console.warn(
-            "No web3 detected. Falling back to http://127.0.0.1:9545. You should remove thi" +
+            "No web3 detected. Falling back to http://127.0.0.1:7545. You should remove thi" +
                     "s fallback when you deploy live",
         );
         // fallback - use your fallback strategy (local node / hosted node + in-dapp id
